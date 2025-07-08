@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
+import { SECRET } from "../config";
 
 // Extend Express Request interface to include 'user'
 declare global {
@@ -9,8 +10,6 @@ declare global {
     }
   }
 }
-
-const SECRET = process.env.JWT_SECRET || "secretkey";
 
 const verifyToken = (req: Request, res: Response, next: NextFunction): void => {
   const authHeader = req.headers.authorization;

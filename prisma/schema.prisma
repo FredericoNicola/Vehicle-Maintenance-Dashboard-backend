@@ -7,6 +7,19 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum Role {
+  ADMIN
+  VIEWER
+}
+
+enum Status {
+  IN_MAINTENANCE
+  COMPLETED
+  LATE_PAYMENT
+  IN_CIRCULATION
+  BROKEN_DOWN
+}
+
 model User {
   id       Int       @id @default(autoincrement())
   email    String    @unique
@@ -22,14 +35,20 @@ model Vehicle {
   make            String
   model           String
   year            Int
+  manufactureDate DateTime?
+  km              Int?
   userId          Int
   maintenanceLogs MaintenanceRecord[]
   user            User                @relation(fields: [userId], references: [id])
+  documents       Document[]
+  status          Status              @default(IN_CIRCULATION)
+  zoneOp          String?
 }
 
 model MaintenanceRecord {
   id             Int       @id @default(autoincrement())
   vehicleId      Int
+  partnerId      Int?
   serviceType    String
   datePerformed  DateTime
   mileage        Int
@@ -37,10 +56,25 @@ model MaintenanceRecord {
   notes          String?
   nextDueDate    DateTime?
   nextDueMileage Int?
+  invoice        String?
   vehicle        Vehicle   @relation(fields: [vehicleId], references: [id])
+  partner        Partner?  @relation(fields: [partnerId], references: [id])
 }
 
-enum Role {
-  ADMIN
-  VIEWER
+model Partner {
+  id           Int                 @id @default(autoincrement())
+  name         String
+  location     String?
+  district     String?
+  coords       String?
+  maintenances MaintenanceRecord[]
+}
+
+model Document {
+  id         Int      @id @default(autoincrement())
+  filename   String
+  url        String
+  uploadedAt DateTime @default(now())
+  vehicleId  Int
+  vehicle    Vehicle  @relation(fields: [vehicleId], references: [id])
 }

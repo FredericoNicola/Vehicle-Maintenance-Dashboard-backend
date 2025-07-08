@@ -1,12 +1,14 @@
 import { Request, Response } from "express";
-import prisma from "../../utils/prims";
+import prisma from "../../utils/prisma";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-
-const SECRET = process.env.JWT_SECRET || "secretkey";
+import { SECRET } from "../config";
 
 export const registerUser = async (req: Request, res: Response) => {
-  const { email, password } = req.body;
+  const { email, password, role = "user" } = req.body;
+  if (!email || !password) {
+    return res.status(400).json({ message: "Email and password are required" });
+  }
   const existingUser = await prisma.user.findUnique({ where: { email } });
 
   if (existingUser)
