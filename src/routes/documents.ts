@@ -5,9 +5,18 @@ import {
 } from "../controllers/documentController";
 import verifyToken from "../middleware/authMiddleware";
 import multer from "multer";
+import path from "path";
 
 const router = Router();
-const upload = multer({ dest: "uploads/" });
+const storage = multer.diskStorage({
+  destination: "uploads/",
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname);
+    const basename = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    cb(null, basename + ext);
+  },
+});
+const upload = multer({ storage });
 
 router.get("/vehicle/:vehicleId", verifyToken, (req, res, next) => {
   Promise.resolve(getDocumentsForVehicle(req, res)).catch(next);

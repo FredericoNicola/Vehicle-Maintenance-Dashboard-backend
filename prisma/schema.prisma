@@ -77,4 +77,6 @@ model Document {
   uploadedAt DateTime @default(now())
   vehicleId  Int
   vehicle    Vehicle  @relation(fields: [vehicleId], references: [id])
+  qrCode     String?
+  qrCodeData Json?
 }
