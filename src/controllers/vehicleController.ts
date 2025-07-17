@@ -1,3 +1,4 @@
+import { Status } from "@prisma/client";
 import { Request, Response } from "express";
 import prisma from "../../utils/prisma";
 
@@ -8,12 +9,10 @@ export const getVehicles = async (req: Request, res: Response) => {
     res.json(vehicles);
   } catch (error) {
     console.error(error); // This will print the error in your backend console
-    res
-      .status(500)
-      .json({
-        message: "Failed to fetch vehicles",
-        error: error instanceof Error ? error.message : error,
-      });
+    res.status(500).json({
+      message: "Failed to fetch vehicles",
+      error: error instanceof Error ? error.message : error,
+    });
   }
 };
 
@@ -40,7 +39,9 @@ export const updateVehicle = async (req: Request, res: Response) => {
 
   try {
     // Ensure the vehicle belongs to the user
-    const existing = await prisma.vehicle.findUnique({ where: { id: Number(id) } });
+    const existing = await prisma.vehicle.findUnique({
+      where: { id: Number(id) },
+    });
     if (!existing || existing.userId !== userId) {
       return res.status(404).json({ message: "Vehicle not found" });
     }
@@ -57,4 +58,22 @@ export const updateVehicle = async (req: Request, res: Response) => {
       error: error instanceof Error ? error.message : error,
     });
   }
+};
+
+export const updateVehicleStatus = async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const { status } = req.body;
+  try {
+    const vehicle = await prisma.vehicle.update({
+      where: { id: Number(id) },
+      data: { status },
+    });
+    res.json(vehicle);
+  } catch (error) {
+    res.status(400).json({ message: "Could not update status", error });
+  }
+};
+
+export const getVehicleStatuses = (req: Request, res: Response) => {
+  res.json(Object.values(Status));
 };

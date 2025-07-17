@@ -3,43 +3,45 @@ import prisma from "../../utils/prisma";
 import fs from "fs";
 import path from "path";
 import { convertPdfToImages } from "../../utils/pdfTransform";
-import { decodeQR } from "../../utils/qrRender";
+import { decodeQR } from "../../utils/qrDecoder";
 
+/**
+ * Parses a QR code string into a key-value object.
+ */
 function parseQRCodeString(qrString: string): Record<string, string> {
-  const pairs = qrString.split("*");
-  const result: Record<string, string> = {};
-  for (const pair of pairs) {
-    const [key, ...rest] = pair.split(":");
-    if (key && rest.length) {
-      result[key] = rest.join(":");
-    }
-  }
-  return result;
+  return qrString.split("*").reduce(
+    (acc, pair) => {
+      const [key, ...rest] = pair.split(":");
+      if (key && rest.length) acc[key] = rest.join(":");
+      return acc;
+    },
+    {} as Record<string, string>
+  );
 }
 
+/**
+ * Handles document upload, extracts QR code, and saves metadata.
+ */
 export const uploadDocument = async (req: Request, res: Response) => {
   const { vehicleId } = req.params;
   const userId = (req.user as any).userId;
 
-  if (!req.file) {
-    return res.status(400).json({ message: "No file uploaded" });
-  }
+  if (!req.file) return res.status(400).json({ message: "No file uploaded" });
 
   // Ensure the vehicle belongs to the logged-in user
   const vehicle = await prisma.vehicle.findUnique({
     where: { id: Number(vehicleId) },
   });
-  if (!vehicle || vehicle.userId !== userId) {
+  if (!vehicle || vehicle.userId !== userId)
     return res.status(404).json({ message: "Vehicle not found" });
-  }
 
   let qrCodeString = "";
-  let qrCodeData = null;
+  let qrCodeData: Record<string, string> | null = null;
 
   try {
     const ext = path.extname(req.file.originalname).toLowerCase();
+
     if (ext === ".pdf") {
-      // Convert PDF to images
       const outputDir = path.join(
         __dirname,
         "../../uploads",
@@ -51,20 +53,39 @@ export const uploadDocument = async (req: Request, res: Response) => {
       );
       for (const imgPath of imagePaths) {
         const qr = await decodeQR(imgPath);
+        // Delete the image after decoding attempt
+        try {
+          fs.unlinkSync(imgPath);
+        } catch (err) {
+          console.error(`Failed to delete image ${imgPath}:`, err);
+        }
         if (qr) {
           qrCodeString = qr;
           break;
         }
       }
-      // Optionally, clean up images after processing
-      // fs.rmSync(outputDir, { recursive: true, force: true });
+      // Delete temp.pdf if it exists
+      const tempPdfPath = path.join(outputDir, "temp.pdf");
+      if (fs.existsSync(tempPdfPath)) {
+        try {
+          fs.unlinkSync(tempPdfPath);
+        } catch (err) {
+          console.error(`Failed to delete temp.pdf:`, err);
+        }
+      }
+      // Remove all files in the outputDir, then remove the directory
+      try {
+        if (fs.existsSync(outputDir)) {
+          fs.rmSync(outputDir, { recursive: true, force: true });
+        }
+      } catch (err) {
+        console.error(`Failed to fully remove directory ${outputDir}:`, err);
+      }
     } else if ([".jpg", ".jpeg", ".png"].includes(ext)) {
       qrCodeString = await decodeQR(req.file.path);
     }
 
-    if (qrCodeString) {
-      qrCodeData = parseQRCodeString(qrCodeString);
-    }
+    if (qrCodeString) qrCodeData = parseQRCodeString(qrCodeString);
 
     const doc = await prisma.document.create({
       data: {
@@ -85,6 +106,9 @@ export const uploadDocument = async (req: Request, res: Response) => {
   }
 };
 
+/**
+ * Returns all documents for a vehicle, including file format.
+ */
 export const getDocumentsForVehicle = async (req: Request, res: Response) => {
   const { vehicleId } = req.params;
   const userId = (req.user as any).userId;
@@ -93,16 +117,14 @@ export const getDocumentsForVehicle = async (req: Request, res: Response) => {
   const vehicle = await prisma.vehicle.findUnique({
     where: { id: Number(vehicleId) },
   });
-  if (!vehicle || vehicle.userId !== userId) {
+  if (!vehicle || vehicle.userId !== userId)
     return res.status(404).json({ message: "Vehicle not found" });
-  }
 
   const docs = await prisma.document.findMany({
     where: { vehicleId: Number(vehicleId) },
     orderBy: { uploadedAt: "desc" },
   });
 
-  // Add fileFormat property to each document
   const docsWithFormat = docs.map((doc) => ({
     ...doc,
     fileFormat: doc.filename.split(".").pop() || null,

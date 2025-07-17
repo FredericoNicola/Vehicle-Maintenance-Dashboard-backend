@@ -3,7 +3,7 @@ import jsQR from "jsqr";
 
 export const decodeQR = async (imagePath: string): Promise<string> => {
   try {
-    const image = await Jimp.read(imagePath); // ✅ Correct usage
+    const image = await Jimp.read(imagePath);
 
     const imageData = {
       data: new Uint8ClampedArray(image.bitmap.data),

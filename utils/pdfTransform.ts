@@ -2,10 +2,6 @@ import { execSync } from "child_process";
 import fs from "fs";
 import path from "path";
 
-/**
- * Converts a PDF to JPEG images using pdftoppm.
- * Returns array of image paths.
- */
 export async function convertPdfToImages(
   pdfBuffer: Buffer,
   outputDir: string
@@ -14,7 +10,7 @@ export async function convertPdfToImages(
   const tempPdfPath = path.join(outputDir, "temp.pdf");
   fs.writeFileSync(tempPdfPath, pdfBuffer);
 
-  // Convert PDF to JPEG images
+  // Convert PDF to JPEG image
   execSync(`pdftoppm -jpeg "${tempPdfPath}" "${path.join(outputDir, "page")}"`);
 
   // Get all generated images
@@ -23,8 +19,8 @@ export async function convertPdfToImages(
     .filter((f) => f.endsWith(".jpg"))
     .map((f) => path.join(outputDir, f));
 
-  // Optionally, remove temp PDF
-  fs.unlinkSync(tempPdfPath);
+  // Later decide if the pdf is deleted or image is deleted
+  // fs.unlinkSync(tempPdfPath);
 
   return images;
 }

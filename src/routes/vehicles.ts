@@ -3,6 +3,8 @@ import {
   getVehicles,
   createVehicle,
   updateVehicle,
+  getVehicleStatuses,
+  updateVehicleStatus,
 } from "../controllers/vehicleController";
 import verifyToken from "../middleware/authMiddleware";
 const router = express.Router();
@@ -12,5 +14,7 @@ router.post("/", verifyToken, createVehicle);
 router.put("/:id", verifyToken, (req, res, next) => {
   Promise.resolve(updateVehicle(req, res)).catch(next);
 });
+router.get("/statuses", getVehicleStatuses);
+router.patch("/:id/status", updateVehicleStatus);
 
 export default router;
