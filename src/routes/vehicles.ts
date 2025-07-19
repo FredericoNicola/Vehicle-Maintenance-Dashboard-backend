@@ -15,6 +15,8 @@ router.put("/:id", verifyToken, (req, res, next) => {
   Promise.resolve(updateVehicle(req, res)).catch(next);
 });
 router.get("/statuses", getVehicleStatuses);
-router.patch("/:id/status", updateVehicleStatus);
+router.patch("/:id/status", (req, res, next) => {
+  Promise.resolve(updateVehicleStatus(req, res)).catch(next);
+});
 
 export default router;
