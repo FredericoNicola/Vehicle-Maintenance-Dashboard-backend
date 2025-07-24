@@ -6,6 +6,7 @@ import {
 import verifyToken from "../middleware/authMiddleware";
 import multer from "multer";
 import path from "path";
+import prisma from "../../utils/prisma"; // Adjust the import based on your project structure
 
 const router = Router();
 const storage = multer.diskStorage({

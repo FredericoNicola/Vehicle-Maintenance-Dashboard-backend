@@ -20,6 +20,13 @@ enum Status {
   BROKEN_DOWN
 }
 
+enum DocumentType {
+  PERIODIC_INSPECTION
+  INVOICE
+  INSURANCE
+  OTHER
+}
+
 model User {
   id       Int       @id @default(autoincrement())
   email    String    @unique
@@ -73,12 +80,14 @@ model Partner {
 }
 
 model Document {
-  id         Int      @id @default(autoincrement())
-  filename   String
-  url        String
-  uploadedAt DateTime @default(now())
-  vehicleId  Int
-  vehicle    Vehicle  @relation(fields: [vehicleId], references: [id])
-  qrCode     String?
-  qrCodeData Json?
+  id           Int          @id @default(autoincrement())
+  filename     String
+  url          String
+  uploadedAt   DateTime     @default(now())
+  vehicleId    Int
+  vehicle      Vehicle      @relation(fields: [vehicleId], references: [id])
+  qrCode       String?
+  qrCodeData   Json?
+  type         DocumentType @default(OTHER)
+  expireDate   DateTime?
 }

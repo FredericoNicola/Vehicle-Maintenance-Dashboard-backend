@@ -5,18 +5,26 @@ import {
   updateVehicle,
   getVehicleStatuses,
   updateVehicleStatus,
+  getBrokenDownVehicles,
+  getVehicle,
 } from "../controllers/vehicleController";
 import verifyToken from "../middleware/authMiddleware";
 const router = express.Router();
 
-router.get("/", verifyToken, getVehicles);
-router.post("/", verifyToken, createVehicle);
-router.put("/:id", verifyToken, (req, res, next) => {
+router.use(verifyToken);
+
+router.get("/", getVehicles);
+router.post("/", createVehicle);
+router.put("/:id", (req, res, next) => {
   Promise.resolve(updateVehicle(req, res)).catch(next);
 });
 router.get("/statuses", getVehicleStatuses);
 router.patch("/:id/status", (req, res, next) => {
   Promise.resolve(updateVehicleStatus(req, res)).catch(next);
+});
+router.get("/broken-down", getBrokenDownVehicles);
+router.get("/:id", (req, res, next) => {
+  Promise.resolve(getVehicle(req, res)).catch(next);
 });
 
 export default router;

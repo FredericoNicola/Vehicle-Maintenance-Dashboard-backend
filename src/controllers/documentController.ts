@@ -25,6 +25,7 @@ function parseQRCodeString(qrString: string): Record<string, string> {
 export const uploadDocument = async (req: Request, res: Response) => {
   const { vehicleId } = req.params;
   const userId = (req.user as any).userId;
+  const { type, expireDate } = req.body; // <-- Get from form-data
 
   if (!req.file) return res.status(400).json({ message: "No file uploaded" });
 
@@ -34,6 +35,23 @@ export const uploadDocument = async (req: Request, res: Response) => {
   });
   if (!vehicle || vehicle.userId !== userId)
     return res.status(404).json({ message: "Vehicle not found" });
+
+  // Block duplicate periodic inspection for this vehicle
+  if (type === "PERIODIC_INSPECTION") {
+    const existing = await prisma.document.findFirst({
+      where: {
+        vehicleId: Number(vehicleId),
+        type: "PERIODIC_INSPECTION",
+      },
+    });
+    if (existing) {
+      return res.status(409).json({
+        message:
+          "This vehicle already has a Periodic Inspection document. Please delete the old one before adding a new one.",
+        existingDocId: existing.id,
+      });
+    }
+  }
 
   let qrCodeString = "";
   let qrCodeData: Record<string, string> | null = null;
@@ -94,6 +112,8 @@ export const uploadDocument = async (req: Request, res: Response) => {
         vehicleId: Number(vehicleId),
         qrCode: qrCodeString || null,
         ...(qrCodeData ? { qrCodeData } : {}),
+        type, // <-- Save type
+        expireDate: expireDate ? new Date(expireDate) : null, // <-- Save expireDate
       },
     });
     res.status(201).json(doc);

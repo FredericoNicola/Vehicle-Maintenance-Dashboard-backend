@@ -153,3 +153,69 @@ export const updateVehicleStatus = async (req: Request, res: Response) => {
 export const getVehicleStatuses = (req: Request, res: Response) => {
   res.json(Object.values(Status));
 };
+
+export const getBrokenDownVehicles = async (req: Request, res: Response) => {
+  try {
+    const userId = (req.user as any).userId;
+    const vehicles = await prisma.vehicle.findMany({
+      where: {
+        userId,
+        status: "BROKEN_DOWN",
+      },
+      select: {
+        id: true,
+        vin: true,
+        licensePlate: true,
+        make: true,
+        model: true,
+        year: true,
+        status: true,
+        km: true,
+        zoneOp: true,
+      },
+      orderBy: { id: "asc" },
+    });
+    res.json(vehicles);
+  } catch (error) {
+    console.error("getBrokenDownVehicles error:", error);
+    res.status(500).json({
+      message: "Failed to fetch broken down vehicles",
+      error: error instanceof Error ? error.message : "Unknown error",
+    });
+  }
+};
+
+export const getVehicle = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const userId = (req.user as any).userId;
+
+    const vehicle = await prisma.vehicle.findUnique({
+      where: { id: Number(id) },
+      select: {
+        id: true,
+        vin: true,
+        licensePlate: true,
+        make: true,
+        model: true,
+        year: true,
+        status: true,
+        userId: true,
+      },
+    });
+
+    if (!vehicle || vehicle.userId !== userId) {
+      return res
+        .status(404)
+        .json({ message: "Vehicle not found or access denied" });
+    }
+
+    res.json(vehicle);
+  } catch (error) {
+    console.error("getVehicle error:", error);
+    res.status(500).json({
+      message: "Failed to fetch vehicle",
+      error: error instanceof Error ? error.message : "Unknown error",
+    });
+  }
+};
