@@ -27,6 +27,15 @@ enum DocumentType {
   OTHER
 }
 
+enum InterventionType {
+  BODYWORK
+  TYRES
+  MAINTENANCE
+  INSPECTION
+  HVAC
+  OTHER
+}
+
 model User {
   id       Int       @id @default(autoincrement())
   email    String    @unique
@@ -53,19 +62,21 @@ model Vehicle {
 }
 
 model MaintenanceRecord {
-  id             Int       @id @default(autoincrement())
-  vehicleId      Int
-  partnerId      Int?
-  serviceType    String
-  datePerformed  DateTime
-  mileage        Int
-  cost           Float
-  notes          String?
-  nextDueDate    DateTime?
-  nextDueMileage Int?
-  invoice        String?
-  vehicle        Vehicle   @relation(fields: [vehicleId], references: [id])
-  partner        Partner?  @relation(fields: [partnerId], references: [id])
+  id                Int        @id @default(autoincrement())
+  vehicleId         Int
+  partnerId         Int?
+  serviceType       String
+  datePerformed     DateTime
+  mileage           Int
+  cost              Float
+  notes             String?
+  nextDueDate       DateTime?
+  nextDueMileage    Int?
+  type              InterventionType @default(OTHER)
+  vehicle           Vehicle   @relation(fields: [vehicleId], references: [id])
+  partner           Partner?  @relation(fields: [partnerId], references: [id])
+  invoiceDocument   Document? @relation(fields: [invoiceDocumentId], references: [id])
+  invoiceDocumentId Int?      @unique
 }
 
 model Partner {
@@ -90,4 +101,5 @@ model Document {
   qrCodeData   Json?
   type         DocumentType @default(OTHER)
   expireDate   DateTime?
+  maintenanceRecord MaintenanceRecord? @relation
 }

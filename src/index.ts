@@ -7,6 +7,7 @@ import vehicleRoutes from "./routes/vehicles";
 import documentRoutes from "./routes/documents";
 import partnerRoutes from "./routes/partners";
 import nifsRoutes from "./routes/nifs"; // Add this line
+import maintenanceRoutes from "./routes/maintenance";
 
 dotenv.config();
 const app = express();
@@ -23,6 +24,7 @@ app.use("/vehicles", vehicleRoutes);
 app.use("/documents", documentRoutes);
 app.use("/partners", partnerRoutes);
 app.use("/nifs", nifsRoutes); // Add this line
+app.use("/maintenance", maintenanceRoutes);
 
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
